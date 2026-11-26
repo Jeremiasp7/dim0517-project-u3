@@ -17,4 +17,12 @@ public class Produto {
     public int getCodigo() { return codigo; }
     public BigDecimal getPreco() { return preco; }
     public int getEstoque() { return estoque; }
+
+    void adicionarEstoque(int quantidade) {
+        this.estoque += quantidade;
+    }
+
+    void removerEstoque(int quantidade) {
+        this.estoque -= quantidade;
+    }
 }
