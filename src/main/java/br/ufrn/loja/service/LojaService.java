@@ -45,13 +45,10 @@ public class LojaService {
         return produto;
     }
 
-    /** Subtrai a quantidade informada do estoque do produto (perda, avaria ou ajuste). */
+    /** Subtrai a quantidade informada do estoque do produto, permitindo saldo negativo. */
     public synchronized Produto saidaEstoque(int codigo, int quantidade) {
         validarQuantidade(quantidade);
         Produto produto = buscar(codigo);
-        if (produto.getEstoque() < quantidade) {
-            throw new EstoqueInsuficienteException(codigo, produto.getEstoque(), quantidade);
-        }
         produto.removerEstoque(quantidade);
         repositorio.salvar(produto);
         return produto;
