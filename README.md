@@ -52,11 +52,17 @@ curl -i -X POST localhost:8080/loja/venda -H "Content-Type: application/json" \
 | Saída de Estoque | `PUT /loja/produto/{codigo}/saida` `{"quantidade":5}` | `200` `{"codigo":123,"estoque":5}`; `404` se não existe; `400` |
 | Venda | `POST /loja/venda` `{"itens":[{"codigo":123,"quantidade":2},{"codigo":456,"quantidade":1}]}` | `201` `{"total":189.70,"itens":[{"codigo":123,"quantidade":2,"subtotal":119.80,"estoque":13},{"codigo":456,"quantidade":1,"subtotal":69.90,"estoque":7}]}`; `404` se algum produto não existe; `400` |
 
-`400`: campo ausente ou com tipo inválido (ex.: `"abc"`, `2.5` em `codigo` ou `quantidade`), preço negativo, quantidade menor ou igual a zero, saída ou venda maior que o estoque disponível, ou lista de itens ausente ou vazia. Em caso de erro, nenhum estoque é alterado.
+`400`: campo ausente ou com tipo inválido (ex.: `"abc"`, `2.5` em `codigo` ou `quantidade`), preço negativo, quantidade menor ou igual a zero, venda maior que o estoque disponível, ou lista de itens ausente ou vazia. Em caso de erro, nenhum estoque é alterado.
+
+A saída de estoque pode deixar o saldo negativo.
 
 A venda é atômica: todos os itens são validados antes de qualquer baixa. Se algum item for inválido, o estoque de nenhum produto é alterado.
 
-## Uso direto da camada de serviço (testes unitários futuros)
+## Testes unitários
+
+Execute com `mvn test`.
+
+## Uso direto da camada de serviço
 ```java
 LojaService s = new LojaService();
 s.cadastrarProduto(123, new BigDecimal("59.90"));
