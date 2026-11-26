@@ -1,10 +1,13 @@
 package br.ufrn.loja.api;
 
 import br.ufrn.loja.service.DadosInvalidosException;
+import br.ufrn.loja.service.ItemVenda;
+import br.ufrn.loja.service.ItemVendido;
 import br.ufrn.loja.service.LojaService;
 import br.ufrn.loja.service.Produto;
 import br.ufrn.loja.service.ProdutoJaExisteException;
 import br.ufrn.loja.service.ProdutoNaoEncontradoException;
+import br.ufrn.loja.service.Venda;
 import br.ufrn.loja.util.Json;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
@@ -13,7 +16,9 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -24,6 +29,7 @@ public class LojaController implements HttpHandler {
     private static final Pattern ESTOQUE = Pattern.compile("^/loja/produto/([^/]+)/estoque/?$");
     private static final Pattern ENTRADA = Pattern.compile("^/loja/produto/([^/]+)/entrada/?$");
     private static final Pattern SAIDA = Pattern.compile("^/loja/produto/([^/]+)/saida/?$");
+    private static final Pattern VENDA = Pattern.compile("^/loja/venda/?$");
 
     private final LojaService service;
 
@@ -70,6 +76,13 @@ public class LojaController implements HttpHandler {
                 Produto p = service.saidaEstoque(codigo, quantidade);
                 status = 200;
                 corpo = mapa("codigo", p.getCodigo(), "estoque", p.getEstoque());
+
+            } else if (VENDA.matcher(path).matches()) {
+                exigirMetodo(metodo, "POST");
+                List<ItemVenda> itens = itensDaVenda(lerCorpo(ex));
+                Venda venda = service.realizarVenda(itens);
+                status = 201;
+                corpo = corpoDaVenda(venda);
 
             } else {
                 status = 404;
@@ -136,6 +149,29 @@ public class LojaController implements HttpHandler {
 
     private BigDecimal decimal(Map<String, Object> req, String campo) {
         return numero(req, campo);
+    }
+
+    @SuppressWarnings("unchecked")
+    private List<ItemVenda> itensDaVenda(Map<String, Object> req) {
+        Object valor = req.get("itens");
+        if (valor == null) throw new RequisicaoInvalidaException("Campo obrigatório ausente: itens");
+        if (!(valor instanceof List)) throw new RequisicaoInvalidaException("Campo 'itens' deve ser uma lista");
+        List<ItemVenda> itens = new ArrayList<>();
+        for (Object elemento : (List<Object>) valor) {
+            if (!(elemento instanceof Map)) throw new RequisicaoInvalidaException("Cada item deve ser um objeto JSON");
+            Map<String, Object> item = (Map<String, Object>) elemento;
+            itens.add(new ItemVenda(inteiro(item, "codigo"), inteiro(item, "quantidade")));
+        }
+        return itens;
+    }
+
+    private Map<String, Object> corpoDaVenda(Venda venda) {
+        List<Object> itens = new ArrayList<>();
+        for (ItemVendido item : venda.itens()) {
+            itens.add(mapa("codigo", item.codigo(), "quantidade", item.quantidade(),
+                    "subtotal", item.subtotal(), "estoque", item.estoque()));
+        }
+        return mapa("total", venda.total(), "itens", itens);
     }
 
     private Map<String, Object> mapa(Object... kv) {
