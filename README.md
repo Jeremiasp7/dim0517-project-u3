@@ -29,6 +29,14 @@ curl -i -X POST localhost:8080/loja/produto -H "Content-Type: application/json" 
 
 # Consultar estoque
 curl -i localhost:8080/loja/produto/123/estoque
+
+# Entrada de estoque (reposição)
+curl -i -X PUT localhost:8080/loja/produto/123/entrada -H "Content-Type: application/json" \
+     -d '{"quantidade":10}'
+
+# Saída de estoque (perda, avaria ou ajuste)
+curl -i -X PUT localhost:8080/loja/produto/123/saida -H "Content-Type: application/json" \
+     -d '{"quantidade":5}'
 ```
 
 ## Endpoints
@@ -36,12 +44,16 @@ curl -i localhost:8080/loja/produto/123/estoque
 |---|---|---|
 | Cadastrar Produto | `POST /loja/produto` `{"codigo":123,"preco":59.90}` | `201` `{"codigo":123,"preco":59.90,"estoque":0}`; `409` se já existe; `400` |
 | Consultar Estoque | `GET /loja/produto/{codigo}/estoque` | `200` `{"codigo":123,"estoque":0}`; `404` se não existe |
+| Entrada de Estoque | `PUT /loja/produto/{codigo}/entrada` `{"quantidade":10}` | `200` `{"codigo":123,"estoque":10}`; `404` se não existe; `400` |
+| Saída de Estoque | `PUT /loja/produto/{codigo}/saida` `{"quantidade":5}` | `200` `{"codigo":123,"estoque":5}`; `404` se não existe; `400` |
 
-`400`: campo ausente ou com tipo inválido (ex.: `"abc"`, `2.5` em `codigo`) ou preço negativo.
+`400`: campo ausente ou com tipo inválido (ex.: `"abc"`, `2.5` em `codigo` ou `quantidade`), preço negativo, quantidade menor ou igual a zero ou saída maior que o estoque disponível. Em caso de erro, nenhum estoque é alterado.
 
 ## Uso direto da camada de serviço (testes unitários futuros)
 ```java
 LojaService s = new LojaService();
 s.cadastrarProduto(123, new BigDecimal("59.90"));
 int estoque = s.consultarEstoque(123);
+s.entradaEstoque(123, 10);
+s.saidaEstoque(123, 5);
 ```

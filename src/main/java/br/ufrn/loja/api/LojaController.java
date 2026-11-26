@@ -23,6 +23,7 @@ public class LojaController implements HttpHandler {
     private static final Pattern POST_PRODUTO = Pattern.compile("^/loja/produto/?$");
     private static final Pattern ESTOQUE = Pattern.compile("^/loja/produto/([^/]+)/estoque/?$");
     private static final Pattern ENTRADA = Pattern.compile("^/loja/produto/([^/]+)/entrada/?$");
+    private static final Pattern SAIDA = Pattern.compile("^/loja/produto/([^/]+)/saida/?$");
 
     private final LojaService service;
 
@@ -59,6 +60,14 @@ public class LojaController implements HttpHandler {
                 int codigo = codigoDaUrl(m.group(1));
                 int quantidade = inteiro(lerCorpo(ex), "quantidade");
                 Produto p = service.entradaEstoque(codigo, quantidade);
+                status = 200;
+                corpo = mapa("codigo", p.getCodigo(), "estoque", p.getEstoque());
+
+            } else if ((m = SAIDA.matcher(path)).matches()) {
+                exigirMetodo(metodo, "PUT");
+                int codigo = codigoDaUrl(m.group(1));
+                int quantidade = inteiro(lerCorpo(ex), "quantidade");
+                Produto p = service.saidaEstoque(codigo, quantidade);
                 status = 200;
                 corpo = mapa("codigo", p.getCodigo(), "estoque", p.getEstoque());
 
