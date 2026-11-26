@@ -1,0 +1,26 @@
+name: Workflow 01
+
+on:
+  push:
+    branches:
+      - 'feature/**'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout do repositório
+        uses: actions/checkout@v4
+
+      - name: Configurar JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: "temurin"
+          java-version: "17"
+          cache: 'maven'
+
+      - name: Resolução das dependências
+        run: mvn dependency:resolve
+      
+      - name: Build do sistema
+        run: mvn clean compile
